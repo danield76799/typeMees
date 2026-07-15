@@ -1,29 +1,41 @@
-/// Nederlandse typeles-woorden, oplopend in moeilijkheid.
+/// Nederlandse typeles-woorden, ingedeeld in moeilijkheidsniveaus.
 /// Geschikt voor kinderen van 8-12 jaar.
-const List<String> typingWords = [
-  // Level 1: korte woorden (2-3 letters)
-  'aap', 'bal', 'cam', 'dak', 'eet', 'fee', 'gek', 'hek', 'ijs', 'jas',
-  'kat', 'lam', 'man', 'nee', 'oom', 'pet', 'qua', 'rat', 'som', 'tak',
-  'uil', 'van', 'wit', 'yep', 'zon', 'bed', 'bus', 'dag', 'elf', 'fit',
-  'gun', 'hol', 'ink', 'juf', 'kip', 'lip', 'map', 'nul', 'oog', 'pop',
+const Map<int, List<String>> wordsByDifficulty = {
+  // Niveau 1: 2-3 letters, korte woorden
+  1: [
+    'aap', 'bal', 'cam', 'dak', 'eet', 'fee', 'gek', 'hek', 'ijs', 'jas',
+    'kat', 'lam', 'man', 'nee', 'oom', 'pet', 'qua', 'rat', 'som', 'tak',
+    'uil', 'wit', 'yep', 'zon', 'bed', 'bus', 'dag', 'elf', 'fit',
+  ],
+  // Niveau 2: 4 letters
+  2: [
+    'auto', 'bank', 'blauw', 'boek', 'cool', 'deur', 'dolfijn', 'fiets',
+    'goud', 'huis', 'jager', 'kerk', 'lamp', 'maan', 'neus', 'olifant',
+    'park', 'stoel', 'tafel', 'vogel', 'water', 'zomer', 'appel', 'boter',
+    'droom', 'eten', 'fiets', 'groen', 'hallo', 'jongen', 'keuken',
+  ],
+  // Niveau 3: 5 letters
+  3: [
+    'ballet', 'banaan', 'cadeau', 'dansen', 'eenden', 'feest', 'gitaar',
+    'hockey', 'juf', 'kabouter', 'lucht', 'mama', 'papa', 'school', 'tent',
+    'vakantie', 'winkel', 'zolder', 'appel', 'bloem', 'dolfijn', 'einde',
+    'fiets', 'groen', 'hallo', 'ijsje', 'jacht', 'klimmen', 'lopen', 'muziek',
+    'schaap', 'vogel', 'zacht',
+  ],
+  // Niveau 4: 6+ letters, complexere woorden
+  4: [
+    'aardappel', 'banaan', 'cactus', 'dolfijn', 'eiland', 'flessen',
+    'gevaarlijk', 'hoppen', 'ijsblokje', 'jubileum', 'kasteel', 'ladder',
+    'mannelijk', 'onderzoek', 'pinguïn', 'quarantaine', 'raket', 'schaduw',
+    'theelepel', 'universum', 'voorjaar', 'waterpas', 'yoghurt', 'zwaartekracht',
+    'afspraak', 'boottocht', 'deurklinke', 'fantastisch', 'gordijnen',
+    'handdoek', 'ijscreme',
+  ],
+};
 
-  // Level 2: middellang (4-5 letters)
-  'auto', 'bank', 'cool', 'deur', 'eend', 'fiets', 'groot', 'huis', 'idee',
-  'jager', 'klein', 'lamp', 'maand', 'nieuw', 'ouder', 'paard', 'robot',
-  'stoel', 'tafel', 'vogel', 'water', 'zomer', 'appel', 'blauw', 'cadeau',
-  'droom', 'eikel', 'feest', 'groen', 'hallo', 'jonge', 'koken', 'lente',
+int getMaxDifficulty() => wordsByDifficulty.length;
 
-  // Level 3: langer (6-7 letters)
-  'bakker', 'cactus', 'dansen', 'eerlijk', 'fietsen', 'gitaar', 'hockey',
-  'juffrouw', 'kasteel', 'ladder', 'mama', 'natuur', 'orkest', 'piraat',
-  'regen', 'school', 'toeter', 'vakantie', 'winkel', 'zolder', 'banaan',
-  'circus', 'dolfijn', 'engel', 'fabriek', 'glimlach', 'herfst', 'insect',
-];
-
-/// Woorden per level (ongeveer 20 per level).
 List<String> getWordsForLevel(int level) {
-  final start = (level - 1) * 20;
-  final end = start + 20;
-  if (start >= typingWords.length) return typingWords;
-  return typingWords.sublist(start, end.clamp(0, typingWords.length));
+  final difficulty = level.clamp(1, getMaxDifficulty());
+  return List.from(wordsByDifficulty[difficulty]!);
 }

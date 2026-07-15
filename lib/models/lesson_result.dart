@@ -8,6 +8,8 @@ class LessonResult {
   final double accuracy; // 0.0 - 1.0
   final int wordsCompleted;
   final Duration timePlayed;
+  final bool? isTimeUp;
+  final int roundReached;
 
   const LessonResult({
     required this.totalKeystrokes,
@@ -18,5 +20,7 @@ class LessonResult {
     required this.accuracy,
     required this.wordsCompleted,
     required this.timePlayed,
+    this.isTimeUp,
+    this.roundReached = 1,
   });
 }

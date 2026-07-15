@@ -28,6 +28,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
   void initState() {
     super.initState();
     _progress = widget.progress;
+    // Herstel streak bij elke opstart (kan ook in main.dart, maar dit
+    // werkt ook en houdt het dashboard up-to-date).
+    _reconcileStreak();
+  }
+
+  Future<void> _reconcileStreak() async {
+    final reconciled = await _progressService.reconcileStreak();
+    if (mounted) {
+      setState(() => _progress = reconciled);
+    }
   }
 
   Future<void> _startLesson() async {
@@ -40,24 +50,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
     );
 
-    if (result != null && mounted) {
-      // Update voortgang met lesresultaat
-      final newTotalPoints = _progress.totalPoints + result.pointsEarned;
-      final newLevel = (newTotalPoints ~/ (_progress.level * 500)) + 1;
+    if (!mounted) return;
+    if (result == null) return;
 
-      setState(() {
-        _progress = _progress.copyWith(
-          totalPoints: newTotalPoints,
-          level: newLevel,
-          totalStars: _progress.totalStars + result.starsEarned,
-          lessonsCompleted: _progress.lessonsCompleted + 1,
-          lastPlayedDate: DateTime.now(),
-        );
-      });
+    // Update voortgang met lesresultaat
+    final newTotalPoints = _progress.totalPoints + result.pointsEarned;
+    final pointsNeeded = _progress.level * 500;
+    final newLevel = (newTotalPoints / pointsNeeded).floor() + 1;
 
-      // Opslaan
-      await _progressService.save(_progress);
-    }
+    setState(() {
+      _progress = _progress.copyWith(
+        totalPoints: newTotalPoints,
+        level: newLevel,
+        totalStars: _progress.totalStars + result.starsEarned,
+        lessonsCompleted: _progress.lessonsCompleted + 1,
+        lastPlayedDate: DateTime.now(),
+      );
+    });
+
+    await _progressService.save(_progress);
   }
 
   @override

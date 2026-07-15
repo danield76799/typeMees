@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/player_progress.dart';
+import '../models/lesson_result.dart';
 
 /// Slaat de voortgang van de speler op en laadt deze.
 class ProgressService {
@@ -61,5 +62,29 @@ class ProgressService {
       await save(updated);
       return updated;
     }
+  }
+
+  /// Silent helper: bij elke opstart controleren of de streak
+  /// verstreken is en behouden.
+  Future<PlayerProgress> reconcileStreak() => checkAndUpdateStreak();
+
+  /// Werkt de voortgang bij met het resultaat van een afgeronde les.
+  /// Dit is de enige plek waar lesresultaten naar persistentie gaan.
+  Future<void> updateAfterLesson(LessonResult result) async {
+    final progress = await load();
+
+    final newTotalPoints = progress.totalPoints + result.pointsEarned;
+    final pointsNeeded = progress.level * 500;
+    final newLevel = (newTotalPoints / pointsNeeded).floor() + 1;
+
+    final updated = progress.copyWith(
+      totalPoints: newTotalPoints,
+      level: newLevel,
+      totalStars: progress.totalStars + result.starsEarned,
+      lessonsCompleted: progress.lessonsCompleted + 1,
+      lastPlayedDate: DateTime.now(),
+    );
+
+    await save(updated);
   }
 }

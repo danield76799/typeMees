@@ -5,12 +5,19 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../../theme/app_theme.dart';
 import '../../../models/lesson_result.dart';
 import '../../../models/typing_words.dart';
+import '../../../services/progress_service.dart';
 import 'widgets/visual_keyboard.dart';
 import 'widgets/timer_bomb.dart';
 import 'widgets/combo_counter.dart';
 import 'widgets/word_display.dart';
 
 /// Het type-les scherm — 10 minuten typen met gamification.
+///
+/// Elke ronde binnen een les wordt iets moeilijker:
+/// * Ronde 1-3: niveau 1 (korte woorden)
+/// * Ronde 4-6: niveau 2 (middellang)
+/// * Ronde 7-9: niveau 3 (langer)
+/// * Ronde 10+: niveau 4 (complex)
 class LessonScreen extends StatefulWidget {
   final int level;
   final int currentStreak;
@@ -31,6 +38,9 @@ class _LessonScreenState extends State<LessonScreen> {
   int _wordIndex = 0;
   int _letterIndex = 0;
 
+  // Ronde tracking voor toenemende moeilijkheid
+  int _round = 1;
+
   // Statistieken
   int _totalKeystrokes = 0;
   int _correctKeystrokes = 0;
@@ -43,6 +53,7 @@ class _LessonScreenState extends State<LessonScreen> {
   String? _wrongKey;
   Timer? _wrongKeyTimer;
   bool _isFinished = false;
+  bool _isTimeUp = false;
   final DateTime _startTime = DateTime.now();
 
   // Focus node voor keyboard input
@@ -51,13 +62,32 @@ class _LessonScreenState extends State<LessonScreen> {
   @override
   void initState() {
     super.initState();
-    _words = getWordsForLevel(widget.level);
-    // Shuffle voor variatie
-    _words.shuffle();
+    _setupRoundWords();
     // Vraag focus na build
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _focusNode.requestFocus();
     });
+  }
+
+  /// Bepaalt welke woorden gebruikt worden op basis van de ronde.
+  /// Ronde 1-3: niveau 1, 4-6: niveau 2, 7-9: niveau 3, 10+: niveau 4.
+  void _setupRoundWords() {
+    final difficulty = switch (_round) {
+      <= 3 => 1,
+      <= 6 => 2,
+      <= 9 => 3,
+      _ => 4,
+    };
+    _words = getWordsForLevel(difficulty);
+    _words.shuffle();
+    _wordIndex = 0;
+    _letterIndex = 0;
+  }
+
+  /// Gaat naar de volgende ronde met een hoger moeilijkheidsniveau.
+  void _nextRound() {
+    _round++;
+    _setupRoundWords();
   }
 
   @override
@@ -67,15 +97,28 @@ class _LessonScreenState extends State<LessonScreen> {
     super.dispose();
   }
 
-  String get _currentWord => _words[_wordIndex];
-  String get _currentLetter => _currentWord[_letterIndex];
+  String get _currentWord {
+    // Beschermd tegen out-of-bounds tijdens een race tussen
+    // setState en build (vooral na het laatste woord).
+    if (_wordIndex >= _words.length) return '';
+    return _words[_wordIndex];
+  }
+
+  String get _currentLetter {
+    final word = _currentWord;
+    if (word.isEmpty || _letterIndex >= word.length) return '';
+    return word[_letterIndex];
+  }
 
   void _onKeyPressed(String key) {
     if (_isFinished) return;
 
     _totalKeystrokes++;
 
-    if (key == _currentLetter) {
+    final letter = _currentLetter;
+    if (letter.isEmpty) return; // geen woord meer beschikbaar
+
+    if (key == letter) {
       // ✅ Correct!
       _correctKeystrokes++;
       _combo++;
@@ -96,10 +139,9 @@ class _LessonScreenState extends State<LessonScreen> {
         _letterIndex = 0;
         _wordIndex++;
 
-        // Alle woorden op? Opnieuw shufflen
+        // Alle woorden op? Nieuwe ronde met moeilijkere woorden
         if (_wordIndex >= _words.length) {
-          _words.shuffle();
-          _wordIndex = 0;
+          _nextRound();
         }
       }
     } else {
@@ -121,7 +163,8 @@ class _LessonScreenState extends State<LessonScreen> {
 
   void _onTimeUp() {
     if (_isFinished) return;
-    setState(() => _isFinished = true);
+    _isTimeUp = true;
+    _isFinished = true;
     _focusNode.unfocus();
   }
 
@@ -148,7 +191,22 @@ class _LessonScreenState extends State<LessonScreen> {
       accuracy: accuracy,
       wordsCompleted: _wordsCompleted,
       timePlayed: timePlayed,
+      isTimeUp: _isTimeUp,
+      roundReached: _round,
     );
+  }
+
+  /// Slaat de voortgang op en keert terug naar het dashboard.
+  void _finishAndPop() async {
+    final result = _buildResult();
+    try {
+      await ProgressService().updateAfterLesson(result);
+    } catch (_) {
+      // Als opslag mislukt, ga dan toch terug; de speler ziet de resultaten.
+    }
+    if (mounted) {
+      Navigator.of(context).pop(result);
+    }
   }
 
   @override
@@ -156,7 +214,7 @@ class _LessonScreenState extends State<LessonScreen> {
     if (_isFinished) {
       return _CelebrationScreen(
         result: _buildResult(),
-        onBackToDashboard: () => Navigator.of(context).pop(_buildResult()),
+        onContinue: _finishAndPop,
       );
     }
 
@@ -177,20 +235,27 @@ class _LessonScreenState extends State<LessonScreen> {
             padding: const EdgeInsets.all(16),
             child: Column(
               children: [
-                // Top bar: timer + combo + punten
+                // Top bar
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    // Terug knop
                     IconButton(
                       icon: const Icon(Icons.close, color: AppTheme.textSecondary),
                       onPressed: () => Navigator.of(context).pop(),
                     ),
-                    // Timer
                     TimerBomb(onTimeUp: _onTimeUp),
-                    // Combo
                     ComboCounter(combo: _combo, maxCombo: _maxCombo),
                   ],
+                ),
+                const SizedBox(height: 8),
+
+                // Ronde indicator
+                Text(
+                  'Ronde $_round',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: AppTheme.textSecondary,
+                        fontWeight: FontWeight.w500,
+                      ),
                 ),
                 const SizedBox(height: 8),
 
@@ -249,16 +314,17 @@ class _LessonScreenState extends State<LessonScreen> {
 /// Het feestelijke eindscherm na de les.
 class _CelebrationScreen extends StatelessWidget {
   final LessonResult result;
-  final VoidCallback onBackToDashboard;
+  final VoidCallback onContinue;
 
   const _CelebrationScreen({
     required this.result,
-    required this.onBackToDashboard,
+    required this.onContinue,
   });
 
   @override
   Widget build(BuildContext context) {
     final accuracyPercent = (result.accuracy * 100).round();
+    final isTimeUp = result.isTimeUp ?? false;
 
     return Scaffold(
       body: SafeArea(
@@ -282,14 +348,21 @@ class _CelebrationScreen extends StatelessWidget {
 
                 // Titel
                 Text(
-                  result.starsEarned == 3
-                      ? 'PERFECT! 🎉'
-                      : result.starsEarned == 2
-                          ? 'GOED GEDAAN! 👏'
-                          : 'GOED BEZIG! 💪',
+                  isTimeUp ? 'TIJD OM! ⏰' : _celebrationTitle,
                   style: Theme.of(context).textTheme.headlineMedium,
                   textAlign: TextAlign.center,
                 ).animate().fadeIn(delay: 300.ms).slideY(begin: -0.2),
+                const SizedBox(height: 12),
+
+                // Ronde bereikt
+                if (result.roundReached != null && result.roundReached! > 1)
+                  Text(
+                    'Je bereikte ronde ${result.roundReached}!',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: AppTheme.accent,
+                          fontWeight: FontWeight.w600,
+                        ),
+                  ).animate().fadeIn(delay: 350.ms),
                 const SizedBox(height: 24),
 
                 // Stats kaart
@@ -348,7 +421,7 @@ class _CelebrationScreen extends StatelessWidget {
 
                 // Terug naar dashboard knop
                 ElevatedButton(
-                  onPressed: onBackToDashboard,
+                  onPressed: onContinue,
                   child: const Text('🏠 TERUG NAAR SCHATKAART'),
                 ).animate().fadeIn(delay: 800.ms),
               ],
@@ -358,6 +431,12 @@ class _CelebrationScreen extends StatelessWidget {
       ),
     );
   }
+
+  String get _celebrationTitle => switch (result.starsEarned) {
+        3 => 'PERFECT! 🎉',
+        2 => 'GOED GEDAAN! 👏',
+        _ => 'GOED BEZIG! 💪',
+      };
 }
 
 /// Een rij in de stats-kaart.
