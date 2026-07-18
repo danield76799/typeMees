@@ -16,77 +16,84 @@ class TreasureMap extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 220,
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF0D1B2A), Color(0xFF1B2838)],
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-        ),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: AppTheme.accent.withAlpha(50),
-          width: 2,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: AppTheme.secondary.withAlpha(20),
-            blurRadius: 20,
-            spreadRadius: 2,
-          ),
-        ],
-      ),
-      child: Stack(
-        children: [
-          // Achtergrond decoratie: stippellijn-pad
-          CustomPaint(
-            size: const Size(double.infinity, 220),
-            painter: _MapPathPainter(
-              color: AppTheme.accent.withAlpha(40),
-            ),
-          ),
-          // Level-eilanden
-          ...List.generate(totalLevels, (index) {
-            final level = index + 1;
-            final isUnlocked = level <= currentLevel;
-            final isCurrent = level == currentLevel;
-            final xFraction = index / (totalLevels - 1);
-            final x = 40 + xFraction * (MediaQuery.of(context).size.width - 120);
-            final y = isCurrent
-                ? 80.0
-                : 120.0 + (index % 3) * 25.0; // Golvend pad
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final height = (constraints.maxWidth * 0.55).clamp(180.0, 260.0);
 
-            return Positioned(
-              left: x - 25,
-              top: y,
-              child: _LevelIsland(
-                level: level,
-                isUnlocked: isUnlocked,
-                isCurrent: isCurrent,
-              ),
-            );
-          }),
-          // Titel
-          Positioned(
-            top: 12,
-            left: 20,
-            child: Text(
-              '🗺️ SCHATKAART',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: AppTheme.accent,
-                    letterSpacing: 3,
-                    fontSize: 14,
-                  ),
+        return Container(
+          height: height,
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFF0D1B2A), Color(0xFF1B2838)],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
             ),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(
+              color: AppTheme.accent.withAlpha(50),
+              width: 2,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: AppTheme.secondary.withAlpha(20),
+                blurRadius: 20,
+                spreadRadius: 2,
+              ),
+            ],
           ),
-        ],
-      ),
-    ).animate().fadeIn(duration: 800.ms).scale(
-          begin: const Offset(0.95, 0.95),
-          duration: 600.ms,
-          curve: Curves.elasticOut,
-        );
+          child: Stack(
+            children: [
+              // Achtergrond decoratie: stippellijn-pad
+              CustomPaint(
+                size: Size(constraints.maxWidth, height),
+                painter: _MapPathPainter(
+                  color: AppTheme.accent.withAlpha(40),
+                  mapHeight: height,
+                ),
+              ),
+              // Level-eilanden
+              ...List.generate(totalLevels, (index) {
+                final level = index + 1;
+                final isUnlocked = level <= currentLevel;
+                final isCurrent = level == currentLevel;
+                final xFraction = totalLevels > 1 ? index / (totalLevels - 1) : 0.0;
+                final x = 40 + xFraction * (constraints.maxWidth - 120);
+                final y = isCurrent
+                    ? height * 0.35
+                    : height * 0.55 + (index % 3) * 22.0;
+
+                return Positioned(
+                  left: x - 25,
+                  top: y,
+                  child: _LevelIsland(
+                    level: level,
+                    isUnlocked: isUnlocked,
+                    isCurrent: isCurrent,
+                  ),
+                );
+              }),
+              // Titel
+              Positioned(
+                top: 12,
+                left: 20,
+                child: Text(
+                  '🗺️ SCHATKAART',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: AppTheme.accent,
+                        letterSpacing: 3,
+                        fontSize: 14,
+                      ),
+                ),
+              ),
+            ],
+          ),
+        ).animate().fadeIn(duration: 800.ms).scale(
+              begin: const Offset(0.95, 0.95),
+              duration: 600.ms,
+              curve: Curves.elasticOut,
+            );
+      },
+    );
   }
 }
 
@@ -149,8 +156,9 @@ class _LevelIsland extends StatelessWidget {
 /// Schildert een golvende stippellijn als pad tussen de eilanden.
 class _MapPathPainter extends CustomPainter {
   final Color color;
+  final double mapHeight;
 
-  _MapPathPainter({required this.color});
+  _MapPathPainter({required this.color, required this.mapHeight});
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -160,11 +168,13 @@ class _MapPathPainter extends CustomPainter {
       ..style = PaintingStyle.stroke;
 
     final path = Path();
-    path.moveTo(40, 140);
+    final yStart = mapHeight * 0.6;
+    path.moveTo(40, yStart);
 
     for (int i = 1; i <= 20; i++) {
       final x = 40.0 + (i / 19) * (size.width - 80);
-      final y = 140.0 + (i % 3 == 0 ? -20.0 : i % 3 == 1 ? 20.0 : 0.0);
+      final y = yStart +
+          (i % 3 == 0 ? -mapHeight * 0.15 : i % 3 == 1 ? mapHeight * 0.15 : 0.0);
       path.lineTo(x, y);
     }
 
@@ -182,5 +192,6 @@ class _MapPathPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant _MapPathPainter oldDelegate) =>
+      oldDelegate.color != color || oldDelegate.mapHeight != mapHeight;
 }

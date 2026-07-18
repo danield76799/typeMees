@@ -31,48 +31,62 @@ class WordDisplay extends StatelessWidget {
           ),
         ],
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: List.generate(word.length, (index) {
-          final letter = word[index];
-          final isTyped = index < currentIndex;
-          final isCurrent = index == currentIndex;
-          final isWrong = isCurrent && wrongLetter != null;
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          // Schaal letters op basis van beschikbare breedte
+          final wordWidth = constraints.maxWidth - 64; // padding binnen
+          final letterSpacing = 4.0;
+          final totalSpacing = (word.length - 1) * letterSpacing;
+          final availableWidth = wordWidth - totalSpacing;
+          final baseFontSize = (availableWidth / word.length).clamp(24.0, 48.0);
 
-          Color letterColor;
-          if (isTyped) {
-            letterColor = AppTheme.success;
-          } else if (isWrong) {
-            letterColor = AppTheme.danger;
-          } else if (isCurrent) {
-            letterColor = AppTheme.secondary;
-          } else {
-            letterColor = AppTheme.textSecondary.withAlpha(100);
-          }
+          return Row(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(word.length, (index) {
+              final letter = word[index];
+              final isTyped = index < currentIndex;
+              final isCurrent = index == currentIndex;
+              final isWrong = isCurrent && wrongLetter != null;
 
-          return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 3),
-            child: isCurrent
-                ? _CurrentLetter(
-                    letter: letter,
-                    color: letterColor,
-                    isWrong: isWrong,
-                  )
-                : Text(
-                    letter.toUpperCase(),
-                    style: TextStyle(
-                      fontSize: 40,
-                      fontWeight: FontWeight.w900,
-                      color: letterColor,
-                      letterSpacing: 4,
-                      decoration: isTyped ? TextDecoration.underline : null,
-                      decorationColor: AppTheme.success.withAlpha(100),
-                      decorationThickness: 3,
-                    ),
-                  ),
+              Color letterColor;
+              if (isTyped) {
+                letterColor = AppTheme.success;
+              } else if (isWrong) {
+                letterColor = AppTheme.danger;
+              } else if (isCurrent) {
+                letterColor = AppTheme.secondary;
+              } else {
+                letterColor = AppTheme.textSecondary.withAlpha(100);
+              }
+
+              final fontSize = isCurrent ? baseFontSize * 1.1 : baseFontSize;
+
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 3),
+                child: isCurrent
+                    ? _CurrentLetter(
+                        letter: letter,
+                        color: letterColor,
+                        isWrong: isWrong,
+                        fontSize: fontSize,
+                      )
+                    : Text(
+                        letter.toUpperCase(),
+                        style: TextStyle(
+                          fontSize: fontSize,
+                          fontWeight: FontWeight.w900,
+                          color: letterColor,
+                          letterSpacing: letterSpacing,
+                          decoration: isTyped ? TextDecoration.underline : null,
+                          decorationColor: AppTheme.success.withAlpha(100),
+                          decorationThickness: 3,
+                        ),
+                      ),
+              );
+            }),
           );
-        }),
+        },
       ),
     );
   }
@@ -83,11 +97,13 @@ class _CurrentLetter extends StatelessWidget {
   final String letter;
   final Color color;
   final bool isWrong;
+  final double fontSize;
 
   const _CurrentLetter({
     required this.letter,
     required this.color,
     required this.isWrong,
+    required this.fontSize,
   });
 
   @override
@@ -98,7 +114,7 @@ class _CurrentLetter extends StatelessWidget {
         Text(
           letter.toUpperCase(),
           style: TextStyle(
-            fontSize: 44,
+            fontSize: fontSize,
             fontWeight: FontWeight.w900,
             color: color,
             letterSpacing: 4,

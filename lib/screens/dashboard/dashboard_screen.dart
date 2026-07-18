@@ -273,39 +273,62 @@ class _StatsGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GridView.count(
-      crossAxisCount: 2,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      mainAxisSpacing: 12,
-      crossAxisSpacing: 12,
-      childAspectRatio: 1.6,
-      children: [
-        _StatCard(
-          icon: '⭐',
-          label: 'Sterren',
-          value: '${progress.totalStars}',
-          color: AppTheme.accent,
-        ),
-        _StatCard(
-          icon: '✅',
-          label: 'Lessen',
-          value: '${progress.lessonsCompleted}',
-          color: AppTheme.success,
-        ),
-        _StatCard(
-          icon: '🎖️',
-          label: 'Badges',
-          value: '${progress.unlockedBadgeIds.length}',
-          color: AppTheme.secondary,
-        ),
-        _StatCard(
-          icon: '📊',
-          label: 'Level',
-          value: '${progress.level}',
-          color: AppTheme.primary,
-        ),
-      ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isWide = constraints.maxWidth >= 360;
+        final cards = [
+          _StatCard(icon: '⭐', label: 'Sterren', value: '${progress.totalStars}', color: AppTheme.accent),
+          _StatCard(icon: '✅', label: 'Lessen', value: '${progress.lessonsCompleted}', color: AppTheme.success),
+          _StatCard(icon: '🎖️', label: 'Badges', value: '${progress.unlockedBadgeIds.length}', color: AppTheme.secondary),
+          _StatCard(icon: '📊', label: 'Level', value: '${progress.level}', color: AppTheme.primary),
+        ];
+
+        if (isWide) {
+          return IntrinsicHeight(
+            child: Row(
+              children: [
+                Expanded(child: Padding(
+                  padding: const EdgeInsets.only(left: 4, right: 6, top: 4, bottom: 4),
+                  child: cards[0],
+                )),
+                Expanded(child: Padding(
+                  padding: const EdgeInsets.only(left: 6, right: 4, top: 4, bottom: 4),
+                  child: cards[1],
+                )),
+              ],
+            ),
+          );
+        }
+
+        return Column(
+          children: [
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                child: Row(
+                  children: [
+                    Expanded(child: cards[0]),
+                    const SizedBox(width: 12),
+                    Expanded(child: cards[1]),
+                  ],
+                ),
+              ),
+            ),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                child: Row(
+                  children: [
+                    Expanded(child: cards[2]),
+                    const SizedBox(width: 12),
+                    Expanded(child: cards[3]),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        );
+      },
     ).animate().fadeIn(delay: 400.ms, duration: 500.ms);
   }
 }
