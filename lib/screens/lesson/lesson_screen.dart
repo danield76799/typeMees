@@ -354,7 +354,7 @@ class _CelebrationScreen extends StatelessWidget {
                 const SizedBox(height: 12),
 
                 // Ronde bereikt
-                if (result.roundReached != null && result.roundReached! > 1)
+                if (result.roundReached > 1)
                   Text(
                     'Je bereikte ronde ${result.roundReached}!',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(

@@ -40,51 +40,54 @@ class WordDisplay extends StatelessWidget {
           final availableWidth = wordWidth - totalSpacing;
           final baseFontSize = (availableWidth / word.length).clamp(24.0, 48.0);
 
-          return Row(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: List.generate(word.length, (index) {
-              final letter = word[index];
-              final isTyped = index < currentIndex;
-              final isCurrent = index == currentIndex;
-              final isWrong = isCurrent && wrongLetter != null;
+          return FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(word.length, (index) {
+                final letter = word[index];
+                final isTyped = index < currentIndex;
+                final isCurrent = index == currentIndex;
+                final isWrong = isCurrent && wrongLetter != null;
 
-              Color letterColor;
-              if (isTyped) {
-                letterColor = AppTheme.success;
-              } else if (isWrong) {
-                letterColor = AppTheme.danger;
-              } else if (isCurrent) {
-                letterColor = AppTheme.secondary;
-              } else {
-                letterColor = AppTheme.textSecondary.withAlpha(100);
-              }
+                Color letterColor;
+                if (isTyped) {
+                  letterColor = AppTheme.success;
+                } else if (isWrong) {
+                  letterColor = AppTheme.danger;
+                } else if (isCurrent) {
+                  letterColor = AppTheme.secondary;
+                } else {
+                  letterColor = AppTheme.textSecondary.withAlpha(100);
+                }
 
-              final fontSize = isCurrent ? baseFontSize * 1.1 : baseFontSize;
+                final fontSize = isCurrent ? baseFontSize * 1.1 : baseFontSize;
 
-              return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 3),
-                child: isCurrent
-                    ? _CurrentLetter(
-                        letter: letter,
-                        color: letterColor,
-                        isWrong: isWrong,
-                        fontSize: fontSize,
-                      )
-                    : Text(
-                        letter.toUpperCase(),
-                        style: TextStyle(
-                          fontSize: fontSize,
-                          fontWeight: FontWeight.w900,
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 3),
+                  child: isCurrent
+                      ? _CurrentLetter(
+                          letter: letter,
                           color: letterColor,
-                          letterSpacing: letterSpacing,
-                          decoration: isTyped ? TextDecoration.underline : null,
-                          decorationColor: AppTheme.success.withAlpha(100),
-                          decorationThickness: 3,
+                          isWrong: isWrong,
+                          fontSize: fontSize,
+                        )
+                      : Text(
+                          letter.toUpperCase(),
+                          style: TextStyle(
+                            fontSize: fontSize,
+                            fontWeight: FontWeight.w900,
+                            color: letterColor,
+                            letterSpacing: letterSpacing,
+                            decoration: isTyped ? TextDecoration.underline : null,
+                            decorationColor: AppTheme.success.withAlpha(100),
+                            decorationThickness: 3,
+                          ),
                         ),
-                      ),
-              );
-            }),
+                );
+              }),
+            ),
           );
         },
       ),
