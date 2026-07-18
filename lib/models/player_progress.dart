@@ -21,6 +21,12 @@ class PlayerProgress {
   /// Max punten nodig voor volgend level (wordt steeds moeilijker).
   int get pointsToNextLevel => level * 500;
 
+  /// Bereken het level op basis van het totaal aantal punten.
+  /// Elk level kost 500 punten (cumulatief): level 1 = 0-499,
+  /// level 2 = 500-999, level 3 = 1000-1499, etc.
+  static int levelForPoints(int totalPoints) =>
+      (totalPoints / 500).floor() + 1;
+
   /// Hoeveel procent naar het volgende level (0.0 - 1.0).
   double get levelProgress {
     final needed = pointsToNextLevel;

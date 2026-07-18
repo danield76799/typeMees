@@ -53,22 +53,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
     if (!mounted) return;
     if (result == null) return;
 
-    // Update voortgang met lesresultaat
-    final newTotalPoints = _progress.totalPoints + result.pointsEarned;
-    final pointsNeeded = _progress.level * 500;
-    final newLevel = (newTotalPoints / pointsNeeded).floor() + 1;
-
-    setState(() {
-      _progress = _progress.copyWith(
-        totalPoints: newTotalPoints,
-        level: newLevel,
-        totalStars: _progress.totalStars + result.starsEarned,
-        lessonsCompleted: _progress.lessonsCompleted + 1,
-        lastPlayedDate: DateTime.now(),
-      );
-    });
-
-    await _progressService.save(_progress);
+    // De les heeft de voortgang al opgeslagen via ProgressService()
+    // (updateAfterLesson). Herlaad de vers-geüpdatete progress zodat het
+    // dashboard synchroon is — bereken NIET zelf opnieuw (dubbele punten!).
+    final updated = await _progressService.load();
+    if (mounted) {
+      setState(() => _progress = updated);
+    }
   }
 
   @override

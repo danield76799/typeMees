@@ -74,8 +74,7 @@ class ProgressService {
     final progress = await load();
 
     final newTotalPoints = progress.totalPoints + result.pointsEarned;
-    final pointsNeeded = progress.level * 500;
-    final newLevel = (newTotalPoints / pointsNeeded).floor() + 1;
+    final newLevel = PlayerProgress.levelForPoints(newTotalPoints);
 
     final updated = progress.copyWith(
       totalPoints: newTotalPoints,
