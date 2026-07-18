@@ -14,7 +14,7 @@ class AppTheme {
   static const Color dark = Color(0xFF1A1A2E); // Donkerblauw (achtergrond)
   static const Color surface = Color(0xFF16213E); // Kaart-achtergrond
   static const Color textPrimary = Color(0xFFFFFFFF);
-  static const Color textSecondary = Color(0xFFB0BEC5);
+  static const Color textSecondary = Color(0xFFCFD8DC);
 
   static ThemeData get darkTheme {
     return ThemeData(

@@ -220,7 +220,6 @@ class _LessonScreenState extends State<LessonScreen> {
 
     return KeyboardListener(
       focusNode: _focusNode,
-      autofocus: true,
       onKeyEvent: (event) {
         if (event is KeyDownEvent) {
           final key = event.logicalKey.keyLabel.toLowerCase();

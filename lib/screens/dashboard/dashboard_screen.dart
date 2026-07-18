@@ -159,41 +159,47 @@ class _StartButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        height: 80,
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [AppTheme.primary, Color(0xFFFF8A65)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: BorderRadius.circular(24),
-          boxShadow: [
-            BoxShadow(
-              color: AppTheme.primary.withAlpha(100),
-              blurRadius: 20,
-              offset: const Offset(0, 8),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(24),
+        splashColor: Colors.white.withAlpha(40),
+        highlightColor: Colors.white.withAlpha(20),
+        child: Container(
+          height: 80,
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [AppTheme.primary, Color(0xFFFF8A65)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
             ),
-          ],
-        ),
-        child: Center(
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Text('⚔️', style: TextStyle(fontSize: 32)),
-              const SizedBox(width: 12),
-              Text(
-                'START TYPELES',
-                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                      color: Colors.white,
-                      letterSpacing: 2,
-                    ),
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: [
+              BoxShadow(
+                color: AppTheme.primary.withAlpha(100),
+                blurRadius: 20,
+                offset: const Offset(0, 8),
               ),
-              const SizedBox(width: 12),
-              const Text('⚔️', style: TextStyle(fontSize: 32)),
             ],
+          ),
+          child: Center(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text('⚔️', style: TextStyle(fontSize: 32)),
+                const SizedBox(width: 12),
+                Text(
+                  'START TYPELES',
+                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                        color: Colors.white,
+                        letterSpacing: 2,
+                      ),
+                ),
+                const SizedBox(width: 12),
+                const Text('⚔️', style: TextStyle(fontSize: 32)),
+              ],
+            ),
           ),
         ),
       ),
@@ -215,35 +221,44 @@ class _StartButton extends StatelessWidget {
 class _PrizeCabinetButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 56,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppTheme.secondary.withAlpha(40),
-            AppTheme.secondary.withAlpha(20),
-          ],
-        ),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () {},
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: AppTheme.secondary.withAlpha(80),
-          width: 1.5,
-        ),
-      ),
-      child: Center(
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Text('🏆', style: TextStyle(fontSize: 24)),
-            const SizedBox(width: 10),
-            Text(
-              'PRIJZENKAST',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: AppTheme.secondary,
-                    letterSpacing: 2,
-                  ),
+        splashColor: AppTheme.secondary.withAlpha(40),
+        highlightColor: AppTheme.secondary.withAlpha(20),
+        child: Container(
+          height: 56,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                AppTheme.secondary.withAlpha(40),
+                AppTheme.secondary.withAlpha(20),
+              ],
             ),
-          ],
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: AppTheme.secondary.withAlpha(80),
+              width: 1.5,
+            ),
+          ),
+          child: Center(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text('🏆', style: TextStyle(fontSize: 24)),
+                const SizedBox(width: 10),
+                Text(
+                  'PRIJZENKAST',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: AppTheme.secondary,
+                        letterSpacing: 2,
+                      ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
