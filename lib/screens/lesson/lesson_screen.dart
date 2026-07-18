@@ -102,15 +102,12 @@ class _LessonScreenState extends State<LessonScreen>
     });
   }
 
-  /// Bepaalt welke woorden gebruikt worden op basis van de ronde.
-  /// Ronde 1-3: niveau 1, 4-6: niveau 2, 7-9: niveau 3, 10+: niveau 4.
+  /// Bepaalt welke woorden gebruikt worden op basis van speler-level + ronde.
+  /// Hoe hoger het speler-level, hoe moeilijker de start-woorden. Elke ronde
+  /// stijgt de moeilijkheid met 1 niveau (tot het maximum).
   void _setupRoundWords() {
-    final difficulty = switch (_round) {
-      <= 3 => 1,
-      <= 6 => 2,
-      <= 9 => 3,
-      _ => 4,
-    };
+    final maxDiff = getMaxDifficulty();
+    final difficulty = (widget.level + _round - 1).clamp(1, maxDiff);
     _words = getWordsForLevel(difficulty);
     _words.shuffle();
     _wordIndex = 0;
@@ -342,7 +339,7 @@ class _LessonScreenState extends State<LessonScreen>
                     ],
                   ),
                   child: Text(
-                    'Ronde $_round — Level ${_words.length} woorden',
+                    'Ronde $_round — Moeilijkheid ${widget.level + _round - 1}',
                     style: Theme.of(context).textTheme.labelLarge?.copyWith(
                           color: Colors.white,
                           fontWeight: FontWeight.w900,
