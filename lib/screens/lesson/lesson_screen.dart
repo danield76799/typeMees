@@ -32,7 +32,8 @@ class LessonScreen extends StatefulWidget {
   State<LessonScreen> createState() => _LessonScreenState();
 }
 
-class _LessonScreenState extends State<LessonScreen> {
+class _LessonScreenState extends State<LessonScreen>
+    with SingleTickerProviderStateMixin {
   // Woorden
   late List<String> _words;
   int _wordIndex = 0;
@@ -48,6 +49,8 @@ class _LessonScreenState extends State<LessonScreen> {
   int _maxCombo = 0;
   int _points = 0;
   int _wordsCompleted = 0;
+  int _powerUpsAvailable = 1; // Start met 1 power-up
+  int _powerUpsUsedTotal = 0;
 
   // Feedback state
   String? _wrongKey;
@@ -59,10 +62,40 @@ class _LessonScreenState extends State<LessonScreen> {
   // Focus node voor keyboard input
   final FocusNode _focusNode = FocusNode();
 
+  // Shake animatie bij een foute toets
+  late final AnimationController _shakeController;
+  late final Animation<Offset> _shakeAnimation;
+
   @override
   void initState() {
     super.initState();
     _setupRoundWords();
+
+    _shakeController = AnimationController(
+      vsync: this,
+      duration: 400.ms,
+    );
+    _shakeAnimation = TweenSequence<Offset>([
+      TweenSequenceItem(
+        tween: Tween(begin: Offset.zero, end: const Offset(0.04, 0)),
+        weight: 1,
+      ),
+      TweenSequenceItem(
+        tween: Tween(
+          begin: const Offset(0.04, 0),
+          end: const Offset(-0.04, 0),
+        ),
+        weight: 2,
+      ),
+      TweenSequenceItem(
+        tween: Tween(begin: const Offset(-0.04, 0), end: Offset.zero),
+        weight: 1,
+      ),
+    ]).animate(CurvedAnimation(
+          parent: _shakeController,
+          curve: Curves.easeInOut,
+        ));
+
     // Vraag focus na build
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _focusNode.requestFocus();
@@ -93,6 +126,7 @@ class _LessonScreenState extends State<LessonScreen> {
   @override
   void dispose() {
     _wrongKeyTimer?.cancel();
+    _shakeController.dispose();
     _focusNode.dispose();
     super.dispose();
   }
@@ -119,7 +153,7 @@ class _LessonScreenState extends State<LessonScreen> {
     if (letter.isEmpty) return; // geen woord meer beschikbaar
 
     if (key == letter) {
-      // ✅ Correct!
+      // Correct!
       _correctKeystrokes++;
       _combo++;
       if (_combo > _maxCombo) _maxCombo = _combo;
@@ -127,6 +161,11 @@ class _LessonScreenState extends State<LessonScreen> {
       // Punten: basis 10 + combo bonus
       final comboBonus = (_combo ~/ 5) * 5; // +5 per 5 combo
       _points += 10 + comboBonus;
+
+      // Power-up: elke 10 woorden een nieuwe
+      if (_wordsCompleted > 0 && _wordsCompleted % 10 == 0) {
+        _powerUpsAvailable++;
+      }
 
       setState(() {
         _letterIndex++;
@@ -145,11 +184,12 @@ class _LessonScreenState extends State<LessonScreen> {
         }
       }
     } else {
-      // ❌ Fout
+      // Fout
       _combo = 0;
       setState(() {
         _wrongKey = key;
       });
+      _shakeController.forward(from: 0);
 
       // Reset wrong key na 400ms
       _wrongKeyTimer?.cancel();
@@ -158,6 +198,37 @@ class _LessonScreenState extends State<LessonScreen> {
           setState(() => _wrongKey = null);
         }
       });
+    }
+  }
+
+  /// Power-up: slaat de helft van het huidige woord over als beloning,
+  /// maar kost 10% van de verdiende punten.
+  void _activatePowerUp() {
+    if (_isFinished) return;
+    if (_powerUpsAvailable <= 0) return;
+    if (_letterIndex >= _currentWord.length || _currentWord.isEmpty) return;
+
+    _powerUpsAvailable--;
+    _powerUpsUsedTotal++;
+    _points = (_points * 0.9).toInt(); // 10% straf
+
+    final targetIndex = (_letterIndex + (_currentWord.length - _letterIndex) ~/ 2)
+        .clamp(_letterIndex + 1, _currentWord.length);
+
+    setState(() {
+      _letterIndex = targetIndex;
+      _wrongKey = null;
+    });
+
+    // Woord af?
+    if (_letterIndex >= _currentWord.length) {
+      _wordsCompleted++;
+      _letterIndex = 0;
+      _wordIndex++;
+
+      if (_wordIndex >= _words.length) {
+        _nextRound();
+      }
     }
   }
 
@@ -193,6 +264,7 @@ class _LessonScreenState extends State<LessonScreen> {
       timePlayed: timePlayed,
       isTimeUp: _isTimeUp,
       roundReached: _round,
+      powerUpsUsed: _powerUpsUsedTotal,
     );
   }
 
@@ -223,7 +295,9 @@ class _LessonScreenState extends State<LessonScreen> {
       onKeyEvent: (event) {
         if (event is KeyDownEvent) {
           final key = event.logicalKey.keyLabel.toLowerCase();
-          if (key.length == 1 && key.codeUnitAt(0) >= 97 && key.codeUnitAt(0) <= 122) {
+          if (key.length == 1 &&
+              key.codeUnitAt(0) >= 97 &&
+              key.codeUnitAt(0) <= 122) {
             _onKeyPressed(key);
           }
         }
@@ -248,34 +322,117 @@ class _LessonScreenState extends State<LessonScreen> {
                 ),
                 const SizedBox(height: 8),
 
-                // Ronde indicator
-                Text(
-                  'Ronde $_round',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: AppTheme.textSecondary,
-                        fontWeight: FontWeight.w500,
+                // Ronde-Hero banner
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [AppTheme.primary, AppTheme.secondary],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppTheme.secondary.withAlpha(80),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
                       ),
+                    ],
+                  ),
+                  child: Text(
+                    'Ronde $_round — Level ${_words.length} woorden',
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 1.5,
+                        ),
+                    textAlign: TextAlign.center,
+                  ),
                 ),
                 const SizedBox(height: 8),
 
-                // Punten teller
-                Text(
-                  '🪙 $_points punten',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: AppTheme.accent,
+                // Punten teller + power-up knop
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      '🪙 $_points punten',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            color: AppTheme.accent,
+                          ),
+                    ),
+                    if (_powerUpsAvailable > 0)
+                      ElevatedButton.icon(
+                        onPressed: _activatePowerUp,
+                        icon: const Icon(Icons.bolt, size: 16),
+                        label: Text('POWER-UP x$_powerUpsAvailable'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.accent,
+                          foregroundColor: Colors.black,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
+                          textStyle: const TextStyle(
+                            fontWeight: FontWeight.w900,
+                            fontSize: 12,
+                          ),
+                        ),
+                      )
+                    else
+                      const Text(
+                        '⚡',
+                        style: TextStyle(fontSize: 18, color: Colors.grey),
                       ),
+                  ],
                 ),
                 const Spacer(),
 
-                // Woord display
-                WordDisplay(
-                  word: _currentWord,
-                  currentIndex: _letterIndex,
-                  wrongLetter: _wrongKey,
+                // Woord display (met shake bij fout)
+                AnimatedBuilder(
+                  animation: _shakeController,
+                  builder: (context, child) => Transform.translate(
+                    offset: _shakeAnimation.value *
+                        MediaQuery.of(context).size.width,
+                    child: child,
+                  ),
+                  child: WordDisplay(
+                    word: _currentWord,
+                    currentIndex: _letterIndex,
+                    wrongLetter: _wrongKey,
+                  ),
                 ),
                 const SizedBox(height: 8),
 
                 // Voortgang woorden
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final progress = _words.isNotEmpty
+                        ? (_wordIndex / _words.length).clamp(0.0, 1.0)
+                        : 0.0;
+                    return Container(
+                      height: 10,
+                      decoration: BoxDecoration(
+                        color: AppTheme.textSecondary.withAlpha(30),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: FractionallySizedBox(
+                        widthFactor: progress,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [AppTheme.primary, AppTheme.secondary],
+                            ),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(height: 6),
                 Text(
                   'Woord ${_wordIndex + 1} van ${_words.length}',
                   style: Theme.of(context).textTheme.bodyMedium,
@@ -287,7 +444,10 @@ class _LessonScreenState extends State<LessonScreen> {
                   highlightedKey: _currentLetter,
                   wrongKey: _wrongKey,
                   completedKeys: _letterIndex > 0
-                      ? _currentWord.substring(0, _letterIndex).split('').toSet()
+                      ? _currentWord
+                          .substring(0, _letterIndex)
+                          .split('')
+                          .toSet()
                       : {},
                 ),
                 const SizedBox(height: 8),
@@ -337,7 +497,9 @@ class _CelebrationScreen extends StatelessWidget {
                 Text(
                   '🌟' * result.starsEarned,
                   style: const TextStyle(fontSize: 60),
-                ).animate().scale(
+                )
+                    .animate()
+                    .scale(
                       duration: 600.ms,
                       begin: const Offset(0, 0),
                       end: const Offset(1.0, 1.0),
@@ -350,7 +512,10 @@ class _CelebrationScreen extends StatelessWidget {
                   isTimeUp ? 'TIJD OM! ⏰' : _celebrationTitle,
                   style: Theme.of(context).textTheme.headlineMedium,
                   textAlign: TextAlign.center,
-                ).animate().fadeIn(delay: 300.ms).slideY(begin: -0.2),
+                )
+                    .animate()
+                    .fadeIn(delay: 300.ms)
+                    .slideY(begin: -0.2),
                 const SizedBox(height: 12),
 
                 // Ronde bereikt
@@ -408,14 +573,25 @@ class _CelebrationScreen extends StatelessWidget {
                       ),
                       const Divider(color: AppTheme.textSecondary, height: 24),
                       _StatRow(
+                        icon: '⚡',
+                        label: 'Power-ups gebruikt',
+                        value: '${result.powerUpsUsed}',
+                        color: AppTheme.accent,
+                      ),
+                      const Divider(color: AppTheme.textSecondary, height: 24),
+                      _StatRow(
                         icon: '⌨️',
                         label: 'Aanslagen',
-                        value: '${result.correctKeystrokes}/${result.totalKeystrokes}',
+                        value:
+                            '${result.correctKeystrokes}/${result.totalKeystrokes}',
                         color: AppTheme.textSecondary,
                       ),
                     ],
                   ),
-                ).animate().fadeIn(delay: 500.ms).slideY(begin: 0.3),
+                )
+                    .animate()
+                    .fadeIn(delay: 500.ms)
+                    .slideY(begin: 0.3),
                 const SizedBox(height: 32),
 
                 // Terug naar dashboard knop

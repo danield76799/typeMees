@@ -10,6 +10,7 @@ class LessonResult {
   final Duration timePlayed;
   final bool? isTimeUp;
   final int roundReached;
+  final int powerUpsUsed;
 
   const LessonResult({
     required this.totalKeystrokes,
@@ -22,5 +23,6 @@ class LessonResult {
     required this.timePlayed,
     this.isTimeUp,
     this.roundReached = 1,
+    this.powerUpsUsed = 0,
   });
 }

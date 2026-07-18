@@ -1,26 +1,26 @@
 /// Nederlandse typeles-woorden, ingedeeld in moeilijkheidsniveaus.
 /// Geschikt voor kinderen van 8-12 jaar.
 const Map<int, List<String>> wordsByDifficulty = {
-  // Niveau 1: 2-3 letters, korte woorden
+  // Niveau 1: 2-3 letters, alledaagse korte woorden
   1: [
     'aap', 'bal', 'cam', 'dak', 'eet', 'fee', 'gek', 'hek', 'ijs', 'jas',
     'kat', 'lam', 'man', 'nee', 'oom', 'pet', 'qua', 'rat', 'som', 'tak',
     'uil', 'wit', 'yep', 'zon', 'bed', 'bus', 'dag', 'elf', 'fit',
   ],
-  // Niveau 2: 4 letters
+  // Niveau 2: 4 letters, bekende woorden
   2: [
-    'auto', 'bank', 'blauw', 'boek', 'cool', 'deur', 'dolfijn', 'fiets',
-    'goud', 'huis', 'jager', 'kerk', 'lamp', 'maan', 'neus', 'olifant',
-    'park', 'stoel', 'tafel', 'vogel', 'water', 'zomer', 'appel', 'boter',
-    'droom', 'eten', 'fiets', 'groen', 'hallo', 'jongen', 'keuken',
+    'auto', 'bank', 'boek', 'cool', 'deur', 'goud', 'huis', 'jager',
+    'kerk', 'lamp', 'maan', 'neus', 'park', 'stoel', 'tafel', 'vogel',
+    'water', 'zomer', 'appel', 'boter', 'droom', 'eten', 'groen', 'hallo',
+    'jongen', 'keuken',
   ],
-  // Niveau 3: 5 letters
+  // Niveau 3: 5 letters, iets moeilijker
   3: [
     'ballet', 'banaan', 'cadeau', 'dansen', 'eenden', 'feest', 'gitaar',
-    'hockey', 'juf', 'kabouter', 'lucht', 'mama', 'papa', 'school', 'tent',
-    'vakantie', 'winkel', 'zolder', 'appel', 'bloem', 'dolfijn', 'einde',
-    'fiets', 'groen', 'hallo', 'ijsje', 'jacht', 'klimmen', 'lopen', 'muziek',
-    'schaap', 'vogel', 'zacht',
+    'hockey', 'kabouter', 'lucht', 'mama', 'papa', 'school', 'tent',
+    'winkel', 'zolder', 'appel', 'bloem', 'einde', 'fiets', 'groen',
+    'hallo', 'ijsje', 'jacht', 'klimmen', 'lopen', 'muziek', 'schaap',
+    'vogel', 'zacht',
   ],
   // Niveau 4: 6+ letters, complexere woorden
   4: [
