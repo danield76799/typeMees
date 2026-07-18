@@ -234,6 +234,9 @@ class _LessonScreenState extends State<LessonScreen>
     _isTimeUp = true;
     _isFinished = true;
     _focusNode.unfocus();
+    // Noodzakelijk: zonder setState herbouwt Flutter niet en blijft het
+    // scherm op het les-scherm (lijkt vastgelopen bij 00:00).
+    if (mounted) setState(() {});
   }
 
   LessonResult _buildResult() {
